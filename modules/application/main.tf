@@ -40,11 +40,14 @@ resource "aws_launch_template" "application" {
     PRIVATE_IP=$(curl -sS \
       -H "X-aws-ec2-metadata-token: $TOKEN" \
       http://169.254.169.254/latest/meta-data/local-ipv4)
-
+    
+    INSTANCE_UUID=$(cat /proc/sys/kernel/random/uuid)
+    
     cat > /var/www/html/index.html <<HTML
     <html>
       <body>
         <h1>Application Instance</h1>
+        <p>UUID: $INSTANCE_UUID</p>
         <p>Instance ID: $INSTANCE_ID</p>
         <p>Private IP: $PRIVATE_IP</p>
       </body>
@@ -75,10 +78,11 @@ resource "aws_launch_template" "application" {
 
 
 resource "aws_lb_target_group" "application" {
-  name     = var.target_group_name
-  port     = var.http_port
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
+  name                          = var.target_group_name
+  port                          = var.http_port
+  protocol                      = "HTTP"
+  vpc_id                        = var.vpc_id
+  load_balancing_algorithm_type = "round_robin"
 
   health_check {
     enabled             = true
